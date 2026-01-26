@@ -35,7 +35,7 @@ Illustration of parameters in SIVA Training script.
 **--GP_dim**：Dimension of the latent Gaussian process embedding  
 **--Normal_dim**：Dimension of the latent standard Gaussian embeddin  
 **--inducing_point_steps**：The number of inducing point steps used to generate inducing points.  
-**lam-mmd**：MMD loss weight  
-**lam-mag**: MAG loss weight  
-**random-seed**: The number of random seeds used for repeated experiments.  
+**--lam-mmd**：MMD loss weight  
+**--lam-mag**: MAG loss weight  
+**--random-seed**: The number of random seeds used for repeated experiments.  
 **-p, --paired**: Whether the data is paired. When used, calculates FOSCTTM metric for evaluation.  
