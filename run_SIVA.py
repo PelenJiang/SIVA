@@ -58,7 +58,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('--loc_range', default=20., type=float)
     parser.add_argument('--kernel_scale', default=20., type=float)
     parser.add_argument('--device', default='cuda')
-    parser.add_argument('--max-epochs', dest='max_epochs', type=int, default=2000, help="Maximum iteration")
+    parser.add_argument('--max-epochs', dest='max_epochs', type=int, default=1000, help="Maximum iteration")
     parser.add_argument('--lam-mag', dest='lam_mag', type=float, default=0.05,help="MAG loss weight")
     parser.add_argument('--lam-mmd', dest="lam_mmd", type=float, default=0.05,help="MMD loss weight")
     parser.add_argument('--lam-gaualign', dest="lam_gaualign", type=float, default=1.0, help="gaussian MMD alignment weight")
@@ -185,9 +185,7 @@ def main(args):
 
     mymodel = SIVAModel(data_configs =data_configs, rna_input_dim = len(rna_config["features"]), atac_input_dim =len(atac_config["features"]),GP_dim=args.GP_dim, Normal_dim=args.Normal_dim,rna_encoder_layers=args.rna_encoder_layers, rna_decoder_layers=args.rna_decoder_layers, atac_encoder_layers=args.atac_encoder_layers, atac_decoder_layers=args.atac_decoder_layers, encoder_dropout=args.dropoutE, decoder_dropout=args.dropoutD, fixed_inducing_points=args.fix_inducing_points, initial_inducing_points=initial_inducing_points, fixed_gp_params=args.fixed_gp_params, kernel_scale=args.kernel_scale, rna_N_train=rna_config["total_cells"], atac_N_train=atac_config["total_cells"], dtype=torch.float64, device=args.device)
 
-    trainer = SIVATrainer(net=mymodel, max_epochs=args.max_epochs, random_seed =args.random_seed, dynamicVAE = args.dynamicVAE,
-                             lam_data = args.lam_data,lam_kl = args.lam_kl, lam_mag=args.lam_mag,init_beta = args.init_beta,
-                             lam_mmd=args.lam_mmd,lam_gaualign=args.lam_gaualign,lr = args.lr,patience=args.patience)
+    trainer = SIVATrainer(net=mymodel, max_epochs=args.max_epochs, random_seed =args.random_seed, dynamicVAE = args.dynamicVAE, lam_data = args.lam_data,lam_kl = args.lam_kl, lam_mag=args.lam_mag,init_beta = args.init_beta,lam_mmd=args.lam_mmd,lam_gaualign=args.lam_gaualign,lr = args.lr,patience=args.patience)
 
 
     trainer.fit(adatas = {"rna": rna, "atac": atac}, anchor_matrix = anchors, 

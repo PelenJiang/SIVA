@@ -10,5 +10,4 @@ CUDA_VISIBLE_DEVICES=0 python ./run_SIVA.py \
 --lam-mmd 5 \
 --lam-mag 1 \
 --random-seed 3 \
---max-epochs 1000 \
 -p
