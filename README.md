@@ -2,7 +2,6 @@
 Code for: "SIVA: Diagonal Integration of Spatial Multi-Omics Data via Spatially-Informed Variational Autoencoders and Anchor Guidance"
 
 ## Installation
-* Python 3.9
 
 ```
 conda create -n siva python=3.9
