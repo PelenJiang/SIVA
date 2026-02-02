@@ -172,7 +172,7 @@ class SIVATrainer:
             rna_ugp, rna_gp_kl, rna_gaussian_kl  = net.rna_svgp(rna_mu, rna_var,batch_data['rna']['xpos'])
             atac_ugp, atac_gp_kl, atac_gaussian_kl  = net.atac_svgp(atac_mu, atac_var,batch_data['atac']['xpos'])
             mmd_loss_gp = imq_kernel(rna_ugp.mean[:net.GP_dim], atac_ugp.mean[:net.GP_dim], h_dim=net.GP_dim) 
-            mmd_loss_gaussian = imq_kernel(rna_ugp.mean[net.GP_dim:], atac_ugp.mean[net.GP_dim:], h_dim=(net.GP_dim+net.Normal_dim)) 
+            mmd_loss_gaussian = imq_kernel(rna_ugp.mean[net.GP_dim:], atac_ugp.mean[net.GP_dim:], h_dim=net.Normal_dim)
             mmd_loss = mmd_loss_gp + self.lam_gaualign * mmd_loss_gaussian
         else:
             mmd_loss = imq_kernel(rna_mu, atac_mu, h_dim=rna_mu.shape[1]) 
