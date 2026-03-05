@@ -179,7 +179,7 @@ class SIVATrainer:
 
         knn_loss = 0.0
         anchor_batch_size = batch_data['is_anchor'].sum().item()
-        knn_loss +=  F.mse_loss(rna_mu[batch_data['is_anchor']], atac_mu[batch_data['is_anchor']], reduction='none').sum() / anchor_batch_size
+        knn_loss +=  F.mse_loss(rna_ugp.mean[batch_data['is_anchor']], atac_ugp.mean[batch_data['is_anchor']], reduction='none').sum() / anchor_batch_size
 
         # rsample()
         if net.GP_dim >0: 
