@@ -24,6 +24,13 @@ from utils import *
 
 
 class SIVAModel(nn.Module):
+    r"""
+    Main SIVA network for spatial multi-omics integration.
+
+    The model maintains one encoder/decoder branch for RNA and one for ATAC.
+    The latent space is split into a spatial GP component (`GP_dim`) and a
+    standard Gaussian component (`Normal_dim`).
+    """
     def __init__(self, data_configs,rna_input_dim,atac_input_dim, GP_dim, Normal_dim, rna_encoder_layers, rna_decoder_layers, atac_encoder_layers, atac_decoder_layers,encoder_dropout, decoder_dropout, fixed_inducing_points, initial_inducing_points, fixed_gp_params, kernel_scale, rna_N_train,atac_N_train, dtype, device):
         super(SIVAModel, self).__init__()
         torch.set_default_dtype(dtype)
@@ -36,12 +43,15 @@ class SIVAModel(nn.Module):
         self.Normal_dim = Normal_dim    # dimension of latent standard Gaussian embedding
 
         self.device = device
+        # RNA encoder/decoder branch. RNA reconstruction is modeled with NB loss.
         self.rna_encoder = DenseEncoder(input_dim=rna_input_dim, hidden_dims=rna_encoder_layers, output_dim=GP_dim+Normal_dim, activation="elu", dropout=encoder_dropout)
         self.rna_decoder = buildNetwork([GP_dim+Normal_dim]+rna_decoder_layers, activation="elu", dropout=decoder_dropout)
 
         self.rna_dec_mean = nn.Sequential(nn.Linear(rna_decoder_layers[-1], rna_input_dim), MeanAct())
         self.rna_dec_disp = nn.Parameter(torch.randn(self.rna_input_dim), requires_grad=True)       # trainable dispersion parameter for NB loss
         if GP_dim>0:
+            # Modality-specific sparse variational GPs inject spatial information
+            # into the GP part of the latent representation.
             self.rna_svgp = ZSVGP(fixed_inducing_points=fixed_inducing_points, initial_inducing_points=initial_inducing_points,
                     fixed_gp_params=fixed_gp_params, kernel_scale=kernel_scale, N_train=rna_N_train,GP_dim=GP_dim, dtype=dtype, device=device)
             self.atac_svgp = ZSVGP(fixed_inducing_points=fixed_inducing_points, initial_inducing_points=initial_inducing_points,
@@ -51,11 +61,13 @@ class SIVAModel(nn.Module):
             self.atac_svgp = None
 
         self.atac_input_dim = atac_input_dim
+        # ATAC encoder/decoder branch. ATAC reconstruction is handled with BCE.
         self.atac_encoder = DenseEncoder(input_dim=atac_input_dim, hidden_dims=atac_encoder_layers, output_dim=GP_dim+Normal_dim, activation="elu", dropout=encoder_dropout)
         self.atac_decoder = buildNetwork([GP_dim+Normal_dim]+ atac_decoder_layers, activation="elu", dropout=decoder_dropout)
 
         self.atac_dec_mean = nn.Sequential(nn.Linear(atac_decoder_layers[-1], atac_input_dim,), nn.Sigmoid())
 
+        # Auxiliary ATAC scaling term used when reconstructing peak accessibility.
         self.l_encoder = buildNetwork([atac_input_dim,]+atac_encoder_layers, activation="elu", dropout=encoder_dropout)
         self.l_encoder.append(nn.Linear(atac_encoder_layers[-1], 1))
 
@@ -67,6 +79,7 @@ class SIVAModel(nn.Module):
     
     
     def save(self, fname: os.PathLike) -> None:
+        r"""Save the full model object with dill serialization."""
         fname = pathlib.Path(fname)
         with fname.open("wb") as f:
             dill.dump(self, f, protocol=4, byref=False, recurse=True)
@@ -76,6 +89,12 @@ class SIVAModel(nn.Module):
             self, key: str, adata: AnnData, batch_size: int = 128, 
             n_sample: Optional[int] = None
     ) -> np.ndarray:
+        r"""
+        Encode one modality into the latent embedding space.
+
+        If spatial GP layers are enabled, the returned embedding is the GP-aware
+        latent representation; otherwise it is the encoder mean.
+        """
 
         self.eval()
         if key =='rna':
@@ -104,6 +123,12 @@ class SIVAModel(nn.Module):
         return torch.cat(result).cpu().numpy()
 
 class SIVATrainer:
+    r"""
+    Training wrapper for SIVAModel.
+
+    This class is responsible for loss construction, optimization, dynamic KL
+    reweighting, logging, and early stopping.
+    """
 
     def __init__(
             self, net: SIVAModel,
@@ -126,6 +151,8 @@ class SIVATrainer:
             patience: int = 30,
             **kwargs
     ) -> None:  
+        # Dynamic beta is controlled by a PID controller so KL values stay near
+        # a target magnitude during training.
         self.net = net
         self.max_epochs = max_epochs
         self.random_seed = random_seed
@@ -159,6 +186,12 @@ class SIVATrainer:
     def compute_losses(
             self, batch_data
     ) -> Mapping[str, torch.Tensor]:
+        r"""
+        Compute the full training objective for one batch.
+
+        The returned loss dictionary contains reconstruction terms, KL terms,
+        modality alignment loss, anchor guidance loss, and the final objective.
+        """
         net = self.net
 
         for modality_key in net.keys:
@@ -169,8 +202,11 @@ class SIVATrainer:
         rna_mu, rna_var = net.rna_encoder(batch_data['rna']['counts'])
         atac_mu, atac_var = net.atac_encoder(batch_data['atac']['counts'])
         if net.GP_dim >0:
+            # Apply spatial GP posteriors to the GP part of the latent variables.
             rna_ugp, rna_gp_kl, rna_gaussian_kl  = net.rna_svgp(rna_mu, rna_var,batch_data['rna']['xpos'])
             atac_ugp, atac_gp_kl, atac_gaussian_kl  = net.atac_svgp(atac_mu, atac_var,batch_data['atac']['xpos'])
+            # Align the two modalities in both the spatial GP subspace and the
+            # non-spatial Gaussian subspace.
             mmd_loss_gp = imq_kernel(rna_ugp.mean[:net.GP_dim], atac_ugp.mean[:net.GP_dim], h_dim=net.GP_dim) 
             mmd_loss_gaussian = imq_kernel(rna_ugp.mean[net.GP_dim:], atac_ugp.mean[net.GP_dim:], h_dim=net.Normal_dim)
             mmd_loss = mmd_loss_gp + self.lam_gaualign * mmd_loss_gaussian
@@ -179,9 +215,10 @@ class SIVATrainer:
 
         knn_loss = 0.0
         anchor_batch_size = batch_data['is_anchor'].sum().item()
+        # Anchor pairs are forced to stay close in the latent space.
         knn_loss +=  F.mse_loss(rna_ugp.mean[batch_data['is_anchor']], atac_ugp.mean[batch_data['is_anchor']], reduction='none').sum() / anchor_batch_size
 
-        # rsample()
+        # Reparameterized sampling keeps the latent path differentiable.
         if net.GP_dim >0: 
             rna_z = rna_ugp.rsample()
             atac_z = atac_ugp.rsample()
@@ -191,7 +228,8 @@ class SIVATrainer:
             rna_z = rna_dist.rsample()
             atac_z = atac_dist.rsample()
 
-        # decode data and reconstruction loss
+        # Decode latent variables back to data space and compute modality-specific
+        # reconstruction losses.
         rna_hidden = net.rna_decoder(rna_z)
         rna_mean = net.rna_dec_mean(rna_hidden)
         rna_disp = (torch.exp(torch.clamp(net.rna_dec_disp, -15., 15.))).unsqueeze(0)
@@ -217,6 +255,8 @@ class SIVATrainer:
         atac_elbo = atac_recon_loss + self.beta['atac'] * atac_kl
 
         vae_loss = rna_elbo + atac_elbo 
+        # Final objective combines reconstruction, regularization, modality
+        # alignment, and anchor guidance.
         gen_loss = vae_loss + self.lam_mmd * mmd_loss  + self.lam_mag * knn_loss
 
         losses = {
@@ -251,6 +291,7 @@ class SIVATrainer:
     def train_step(
             self, batch_data
     ) -> Mapping[str, torch.Tensor]:
+        r"""Run one optimization step and return batch losses."""
         self.net.train()
         losses,batch_size = self.compute_losses(batch_data)
         self.net.zero_grad(set_to_none=True)
@@ -260,6 +301,7 @@ class SIVATrainer:
         return losses,batch_size
 
     def train(self, adatas, train_loader,  max_epochs,directory):
+        r"""Run the epoch loop, log metrics, and save the final checkpoint."""
 
         earlystop_model_dir = directory / 'Eearly_Stop_Models'
         self.earlystop.model_file = directory / 'Earlystop_model.pt'
@@ -282,6 +324,7 @@ class SIVATrainer:
                 batch_train_count += 1
                 if self.dynamicVAE:
                     for k in self.net.keys:
+                        # Smooth recent KL values before updating beta.
                         KL_val[k] = train_losses[f"{k}_kl"].item()
                         queue[k].append(KL_val[k])
                         avg_KL[k] = np.mean(queue[k])
@@ -314,6 +357,12 @@ class SIVATrainer:
             data_batch_size: int = 128,
             directory: Optional[os.PathLike] = None
     ) -> None:
+        r"""
+        Build the training data pipeline and start model fitting.
+
+        Batches are sampled from a mixture of anchor-paired cells and mixed
+        modality cells so the model learns both reconstruction and alignment.
+        """
 
         directory = pathlib.Path(directory)
         directory.mkdir(parents=True, exist_ok=True)

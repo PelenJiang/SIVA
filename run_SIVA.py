@@ -190,6 +190,8 @@ def main(args):
 
     trainer.fit(adatas = {"rna": rna, "atac": atac}, anchor_matrix = anchors, 
                 data_batch_size = args.data_batch_size,directory= args.result_dir + '/finetune')
+    elapsed_time = time.time() - start_time
+    
     rna.obsm["X_emb"] = mymodel.encode_data("rna", rna)
     atac.obsm["X_emb"] = mymodel.encode_data("atac", atac)
 
@@ -204,7 +206,7 @@ def main(args):
     pd.DataFrame(atac.obsm["X_emb"], index=atac.obs_names).to_csv(args.result_dir+"/atac_latent.csv", header=False)
     mymodel.save(args.result_dir+"/final_model.dill")
 
-    elapsed_time = time.time() - start_time
+
     run_info_path = pathlib.Path(args.result_dir + '/run_info.yaml')
     with run_info_path.open("w") as f:
         yaml.dump({

@@ -8,7 +8,7 @@ import math
 
 def sq_dist(x1, x2, x1_eq_x2=False):
     """Equivalent to the square of `torch.cdist` with p=2."""
-    # TODO: use torch squared cdist once implemented: https://github.com/pytorch/pytorch/pull/25799
+
     adjustment = x1.mean(-2, keepdim=True)
     x1 = x1 - adjustment
 

@@ -29,6 +29,10 @@ def configure_dataset(
         Dataset to be configured
     use_highly_variable
         Whether to use highly variable features
+    use_spatial_pos
+        Data position to use as spatial positional information (key in ``adata.obsm``)
+    use_size_factors        
+        Data scalar to use as size factors (key in ``adata.obs``)
     use_layer
         Data layer to use (key in ``adata.layers``)
     use_rep
@@ -36,18 +40,9 @@ def configure_dataset(
         (key in ``adata.obsm``)
     use_batch
         Data batch to use (key in ``adata.obs``)
-    use_cell_type
-        Data cell type to use (key in ``adata.obs``)
-    use_dsc_weight
-        Discriminator sample weight to use (key in ``adata.obs``)
     use_obs_names
-        Whether to use ``obs_names`` to mark paired cells across
-        different datasets
+        Whether to use ``obs_names`` to mark paired cells across different datasets
 
-    Note
-    -----
-    The ``use_rep`` option applies to encoder inputs, but not the decoders,
-    which are always fitted on data in the original space.
     """
     data_config = {}
     data_config["total_cells"] = adata.shape[0]
@@ -334,7 +329,7 @@ class AnchorPairedDataset(Dataset):
         return len(self.paired_indices)
     
     def __getitem__(self, idx):
-        """获取配对的RNA和ATAC数据"""
+        """Acquire paired data of RNA and ATAC modalities according to the anchor indices"""
         rna_idx, atac_idx, score = self.paired_indices[idx]
         # RNA data
         rna_data = {
