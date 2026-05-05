@@ -80,15 +80,12 @@ Anchors with `score >= 0.5` are retained during training.
 
 ###  Source Data
  
-- MISAR-seq: <https://www.biosino.org/node/project/detail/OEP003285>
-- Spatial ATAC-RNA-seq: 
-<https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE205055> or 
-<https://brain-spatial-omics.cells.ucsc.edu>
+- MISAR-seq: [OEP003285](https://www.biosino.org/node/project/detail/OEP003285)
+- Spatial ATAC-RNA-seq: [GSE205055](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE205055) or <https://brain-spatial-omics.cells.ucsc.edu>
 
 ###  Processed Data
-The processed data is freely available at: 
-
-
+- The processed data is freely available at:  
+<https://zenodo.org/records/20034790>
 
 ## ▶️ Quick Start
 
@@ -114,8 +111,6 @@ python ./run_SIVA.py \
   --random-seed 3 \
   -p
 ```
-
-
 
 ## ⚙️ Main Arguments
 
