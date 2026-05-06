@@ -139,9 +139,9 @@ python ./run_SIVA.py \
 
 - `--lam-mag`: anchor guidance loss weight
 - `--lam-mmd`: MMD loss weight
-- `--lam-gaualign`: Gaussian alignment loss weight
-- `--lam-data`: modality reconstruction weight
-- `--lam-kl`: KL loss weight
+- `--init_beta`: initial coefficient of the KL loss
+- `--min_beta`: minimal coefficient of the KL loss
+- `--max_beta`: maximal coefficient of the KL loss
 
 ### Spatial GP settings
 
