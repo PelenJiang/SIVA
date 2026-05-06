@@ -23,7 +23,7 @@ This repository contains the reference implementation for the manuscript:
 ├── metrics.py         # Evaluation metrics
 ├── kernel.py          # Kernels for SVGP
 ├── distributions.py   # Data distributions
-├── utils.py           
+├── utils.py           # Additional utilities
 └── requirements.txt
 ```
 
