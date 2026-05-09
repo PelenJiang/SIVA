@@ -92,13 +92,13 @@ Anchors with `score >= 0.5` are retained during training.
 Run the example shell script:
 
 ```bash
-bash ./run_SIVA.sh
+bash run_SIVA.sh
 ```
 
 Or launch training directly:
 
 ```bash
-python ./run_SIVA.py \
+python run_SIVA.py \
   --input-rna /path/to/rna.h5ad \
   --input-atac /path/to/atac.h5ad \
   --input-anchor /path/to/anchors.csv \
