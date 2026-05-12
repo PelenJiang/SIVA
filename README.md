@@ -15,15 +15,16 @@ This repository contains the reference implementation for the manuscript:
 
 ```text
 .
-├── run_SIVA.py        # Main training and evaluation entry point
-├── run_SIVA.sh        # Example launch script
-├── model.py           # Model definition and trainer
-├── SVGP.py            # Sparse variational Gaussian process modules
-├── data.py            # Dataset configuration and dataloaders
-├── metrics.py         # Evaluation metrics
-├── kernel.py          # Kernels for SVGP
-├── distributions.py   # Data distributions
-├── utils.py           # Additional utilities
+├── run_SIVA.py           # Main training and evaluation entry point
+├── run_SIVA.sh           # Example launch script
+├── model.py              # Model definition and trainer
+├── SVGP.py               # Sparse variational Gaussian process modules
+├── data.py               # Dataset configuration and dataloaders
+├── metrics.py            # Evaluation metrics
+├── kernel.py             # Kernels for SVGP
+├── distributions.py      # Data distributions
+├── utils.py              # Additional utilities
+├── Calculate_Anchors.R   # Calculate anchors from Seurat
 └── requirements.txt
 ```
 
