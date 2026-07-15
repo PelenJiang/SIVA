@@ -159,5 +159,17 @@ python run_SIVA.py \
 
 
 ## 📖 Citation
+If you find our work useful in your research, please consider citing:
 
-If you use SIVA in your work, please cite the corresponding manuscript.
+```bibtex
+@article{jiang2026siva,
+  title={SIVA: diagonal integration of spatial multi-omics data via spatially informed variational autoencoders and anchor guidance},
+  author={Jiang, Peng and Chen, Sishuo and Wu, Xingye and Liu, Juan and Tian, Tian},
+  journal={Bioinformatics},
+  volume={42},
+  number={Supplement\_1},
+  pages={btag247},
+  year={2026},
+  publisher={Oxford University Press}
+}
+```
