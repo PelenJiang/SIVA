@@ -205,11 +205,32 @@ class SIVATrainer:
             # Apply spatial GP posteriors to the GP part of the latent variables.
             rna_ugp, rna_gp_kl, rna_gaussian_kl  = net.rna_svgp(rna_mu, rna_var,batch_data['rna']['xpos'])
             atac_ugp, atac_gp_kl, atac_gaussian_kl  = net.atac_svgp(atac_mu, atac_var,batch_data['atac']['xpos'])
-            # Align the two modalities in both the spatial GP subspace and the
-            # non-spatial Gaussian subspace.
-            mmd_loss_gp = imq_kernel(rna_ugp.mean[:net.GP_dim], atac_ugp.mean[:net.GP_dim], h_dim=net.GP_dim) 
-            mmd_loss_gaussian = imq_kernel(rna_ugp.mean[net.GP_dim:], atac_ugp.mean[net.GP_dim:], h_dim=net.Normal_dim)
-            mmd_loss = mmd_loss_gp + self.lam_gaualign * mmd_loss_gaussian
+            # Align all anchor-derived pairs with the narrow kernel scale and
+            # align the remaining mixed samples with the wider kernel scale.
+            anchor_mask = batch_data['is_anchor'].bool()
+            mixed_mask = ~anchor_mask
+
+            mmd_loss_anchor = rna_ugp.mean.new_zeros(())
+            mmd_loss_mixed = rna_ugp.mean.new_zeros(())
+
+            if anchor_mask.sum().item() >= 2:
+                mmd_loss_anchor = imq_kernel(
+                    rna_ugp.mean[anchor_mask],
+                    atac_ugp.mean[anchor_mask],
+                    h_dim=net.GP_dim,
+                )
+
+            if mixed_mask.sum().item() >= 2:
+                mmd_loss_mixed = imq_kernel(
+                    rna_ugp.mean[mixed_mask],
+                    atac_ugp.mean[mixed_mask],
+                    h_dim=net.Normal_dim,
+                )
+
+            mmd_loss = (
+                mmd_loss_anchor
+                + self.lam_gaualign * mmd_loss_mixed
+            )
         else:
             mmd_loss = imq_kernel(rna_mu, atac_mu, h_dim=rna_mu.shape[1]) 
 
