@@ -390,7 +390,7 @@ class SIVATrainer:
 
         dataloader = SimpleBalancedLoader(
             anchor_dataset, mix_datasat, 
-            batch_size=data_batch_size, paired_ratio=0.3  # 30%来自anchor对
+            batch_size=data_batch_size, paired_ratio=0.3  
         )
         print("Begin SIVA Training! ")
         try:
