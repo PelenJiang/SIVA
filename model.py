@@ -1,8 +1,3 @@
-r"""
-Graph-linked unified embedding (GLUE) for single-cell multi-omics
-data integration
-"""
-
 import time
 import os
 import pathlib
@@ -217,14 +212,14 @@ class SIVATrainer:
                 mmd_loss_anchor = imq_kernel(
                     rna_ugp.mean[anchor_mask],
                     atac_ugp.mean[anchor_mask],
-                    h_dim=net.GP_dim,
+                    scale=net.GP_dim,
                 )
 
             if mixed_mask.sum().item() >= 2:
                 mmd_loss_mixed = imq_kernel(
                     rna_ugp.mean[mixed_mask],
                     atac_ugp.mean[mixed_mask],
-                    h_dim=net.Normal_dim,
+                    scale=net.Normal_dim,
                 )
 
             mmd_loss = (
