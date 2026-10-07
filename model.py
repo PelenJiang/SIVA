@@ -212,14 +212,14 @@ class SIVATrainer:
                 mmd_loss_anchor = imq_kernel(
                     rna_ugp.mean[anchor_mask],
                     atac_ugp.mean[anchor_mask],
-                    scale=net.GP_dim,
+                    h_dim=net.GP_dim,
                 )
 
             if mixed_mask.sum().item() >= 2:
                 mmd_loss_mixed = imq_kernel(
                     rna_ugp.mean[mixed_mask],
                     atac_ugp.mean[mixed_mask],
-                    scale=net.Normal_dim,
+                    h_dim=net.Normal_dim,
                 )
 
             mmd_loss = (
