@@ -194,7 +194,6 @@ class SingleModalDataset(Dataset):
         return len(self.adata)
     
     def __getitem__(self, idx):
-        """获取单个细胞数据（随机配对）"""
         data_idx = idx % len(self.counts)
         
         data = {
@@ -213,9 +212,7 @@ def SingleModal_collate_fn(batch):
     batch: List, each iter is a dictionary from dataset.__getitem__
     """
     collated = {}
-    # 遍历每个字段（counts, xraw, xpos, xsf）
     for key in batch[0].keys():
-        # 收集该字段的所有样本
         samples = [d[key] for d in batch]
         collated[key] = torch.stack([torch.tensor(s) for s in samples])
 
